@@ -1,4 +1,4 @@
-﻿# include <Siv3D.hpp>
+﻿#include<Siv3D.hpp>
 #include"HandObject.h"
 #include"Shots.h"
 #include"Targets.h"
@@ -9,36 +9,6 @@ double absolute(const double x) {
 }
 
 enum Mode { Shooting, Changing, Announce };
-
-//-1:間違えたヒット　0:ヒットなし　1:ヒット
-int HitCheak(Shots& S, Targets& T, Result mode) {
-    const int r = S.ShotSize + T.TargetSize;
-    auto Titr = T.Targets_.begin();
-    for (auto& Shot : S.bullets) {
-        if (Shot.state >= Hit) {
-            continue;
-        }
-        while (Titr != T.Targets_.end()) {
-            if (Shot.position.y <= (*Titr).position.y + r && absolute(Shot.position.x - (*Titr).position.x) < r) {
-                Result result = JunkenResult(static_cast<Hand>(Shot.state), static_cast<Hand>((*Titr).state));
-                Shot.state = Hit;
-                T.Targets_.erase(Titr);
-                if (result == mode) {
-                    return 1;
-                }
-                else {
-                    return -1;
-                }
-            }
-            else {
-                ++Titr;
-            }
-        }
-    }
-    return 0;
-}
-
-
 
 
 // シーンの名前
@@ -135,6 +105,34 @@ private:
     const double Announce_time = 2.0;
     double timer = 0.0;
     int count = 30;
+
+    //-1:間違えたヒット　0:ヒットなし　1:ヒット
+    int HitCheak() {
+        const int r = cannon.shots.ShotSize + targets.TargetSize;
+        auto Titr = targets.Targets_.begin();
+        for (auto& Shot : cannon.shots.bullets) {
+            if (Shot.state >= Hit) {
+                continue;
+            }
+            while (Titr != targets.Targets_.end()) {
+                if (Shot.position.y <= (*Titr).position.y + r && absolute(Shot.position.x - (*Titr).position.x) < r) {
+                    Result result = JunkenResult(static_cast<Hand>(Shot.state), static_cast<Hand>((*Titr).state));
+                    Shot.state = Hit;
+                    targets.Targets_.erase(Titr);
+                    if (result == rule) {
+                        return 1;
+                    }
+                    else {
+                        return -1;
+                    }
+                }
+                else {
+                    ++Titr;
+                }
+            }
+        }
+        return 0;
+    }
 public:
 
     Game(const InitData& init)
@@ -153,7 +151,7 @@ public:
         }
         cannon.update();
 
-        int rc = HitCheak(cannon.shots, targets, rule);
+        int rc = HitCheak();
         if (rc == -1) {
             --HP;
         }
